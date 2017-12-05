@@ -89,7 +89,13 @@ namespace Interpreter
         {
             Token classToken = NextToken();
             Identifier identifier = new Identifier(NextToken().Value);
-            return new ClassDecl(identifier);
+            List<Declaration> body = new List<Declaration>();
+            while(!Match(TokenType.END))
+            {
+                body.Add(CreateDeclaration());
+            }
+            Token end = NextToken();
+            return new ClassDecl(identifier, body);
         }
 
         private VarDecl CreateVarDecl()

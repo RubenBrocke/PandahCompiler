@@ -26,7 +26,8 @@ namespace Interpreter
             { "return", TokenType.RETURN },
             { "this",   TokenType.THIS },
             { "true",   TokenType.TRUE },
-            { "while",  TokenType.WHILE }
+            { "while",  TokenType.WHILE },
+            { "end",    TokenType.END}
         };
     }
 }

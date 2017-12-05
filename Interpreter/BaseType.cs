@@ -27,6 +27,7 @@ namespace Interpreter
         T VisitGrouping(Grouping basetype);
         T VisitLiteral(Literal literal);
         T VisitWhile(While @while);
+        T VisitIf(If @if);
     }
     public abstract class BaseType
     {
@@ -60,14 +61,21 @@ namespace Interpreter
     public class ClassDecl : Declaration
     {
         public Identifier className;
-        public ClassDecl(Identifier className)
+
+        public List<Declaration> body;
+
+        public ClassDecl(Identifier className, List<Declaration> body)
         {
             this.className = className;
+            this.body = body;
         }
+
         public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitClassDecl(this);
         }
+
+
     }
 
     public class MethodDecl : Declaration
@@ -349,6 +357,23 @@ namespace Interpreter
         public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitWhile(this);
+        }
+    }
+
+    public class If : Statement
+    {
+        public Expression condition;
+        public List<Declaration> declarations;
+
+        public If(Expression condition, List<Declaration> declarations)
+        {
+            this.condition = condition;
+            this.declarations = declarations;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitIf(this);
         }
     }
 }

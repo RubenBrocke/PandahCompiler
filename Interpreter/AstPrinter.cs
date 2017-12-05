@@ -58,6 +58,11 @@ namespace Interpreter
             throw new NotImplementedException();
         }
 
+        public string VisitIf(If @if)
+        {
+            throw new NotImplementedException();
+        }
+
         public string VisitLiteral(Literal literal)
         {
             throw new NotImplementedException();
