@@ -1,0 +1,6 @@
+﻿class Animal
+  name :: String
+  Move :: Int <- Bool, Int
+
+  # Logic here
+end
