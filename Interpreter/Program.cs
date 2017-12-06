@@ -17,7 +17,8 @@ namespace Interpreter
             scanner.PrintTokens();
             Parser parser = new Parser(tokens);
             parser.Parse();
-            System.Diagnostics.Debugger.Break();           
+            AstPrinter astPrinter = new AstPrinter();
+            astPrinter.VisitProgramStart((ProgramStart)parser.Root);
             Console.ReadLine();
         }
     }

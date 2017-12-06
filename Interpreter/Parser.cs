@@ -10,7 +10,7 @@ namespace Interpreter
     {
         private List<Token> _tokens;
         private int _index;
-        private BaseType Root;
+        public BaseType Root;
         public Parser(List<Token> inputTokens)
         {
             _tokens = inputTokens;

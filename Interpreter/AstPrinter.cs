@@ -10,27 +10,27 @@ namespace Interpreter
     {
         public string VisitAddition(Addition basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Addition", basetype.left, basetype.right);
         }
 
         public string VisitAssignment(Assignment basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Assignment", basetype.identifier, basetype.expression);
         }
 
         public string VisitBlock(Block basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Block", basetype.statements.ToArray());
         }
 
         public string VisitClassDecl(ClassDecl basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Class", basetype.className, basetype.body.ToArray());
         }
 
         public string VisitComparison(Comparison basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Comparison", basetype.left, basetype.right);
         }
 
         public string VisitDeclaration(Declaration basetype)
@@ -40,7 +40,7 @@ namespace Interpreter
 
         public string VisitEquality(Equality basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Equality", basetype.left, basetype.right);
         }
 
         public string VisitExpression(Expression basetype)
@@ -70,7 +70,7 @@ namespace Interpreter
 
         public string VisitLogic(Logic basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Logic", basetype.left, basetype.right);
         }
 
         public string VisitMethodDecl(MethodDecl basetype)
@@ -80,7 +80,7 @@ namespace Interpreter
 
         public string VisitMultiplication(Multiplication basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Multiplication", basetype.left, basetype.right);
         }
 
         public string VisitNumber(Number basetype)
@@ -110,7 +110,7 @@ namespace Interpreter
 
         public string VisitUnary(Unary expression)
         {
-            return Parenthesize(expression.Operator.Value, expression.right);
+            return Parenthesize("Unart", expression.right);
         }
 
         public string VisitVarDecl(VarDecl basetype)
