@@ -28,6 +28,7 @@ namespace Interpreter
         T VisitLiteral(Literal literal);
         T VisitWhile(While @while);
         T VisitIf(If @if);
+        T VisitMethodBody(MethodBody methodBody);
     }
     public abstract class BaseType
     {
@@ -263,7 +264,7 @@ namespace Interpreter
         }
     }
 
-    public class Number : BaseType
+    public class Number : Expression
     {
         public string value;
         public Number(string value)
@@ -276,7 +277,7 @@ namespace Interpreter
         }
     }
 
-    public class String : BaseType
+    public class String : Expression
     {
         public string value;
         public String(string value)
@@ -302,7 +303,7 @@ namespace Interpreter
         }
     }
 
-    public class Identifier : BaseType
+    public class Identifier : Expression
     {
         public string value;
         public Identifier(string value)
@@ -374,6 +375,25 @@ namespace Interpreter
         public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitIf(this);
+        }
+    }
+
+    public class MethodBody : Statement
+    {
+        public Identifier identifier;
+        public List<Expression> arguments;
+        public List<Declaration> body;
+
+        public MethodBody(Identifier identifier, List<Expression> arguments, List<Declaration> body)
+        {
+            this.identifier = identifier;
+            this.arguments = arguments;
+            this.body = body;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitMethodBody(this);
         }
     }
 }

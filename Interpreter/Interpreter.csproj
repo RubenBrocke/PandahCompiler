@@ -44,7 +44,9 @@
   <ItemGroup>
     <Compile Include="AstPrinter.cs" />
     <Compile Include="BaseType.cs" />
+    <Compile Include="Compiler.cs" />
     <Compile Include="CompilerException.cs" />
+    <Compile Include="Environment.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

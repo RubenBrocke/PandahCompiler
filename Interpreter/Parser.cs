@@ -10,7 +10,10 @@ namespace Interpreter
     {
         private List<Token> _tokens;
         private int _index;
-        public BaseType Root;
+        public ProgramStart Root;
+        private Class currentClass;
+        private Method currentMethod;
+
         public Parser(List<Token> inputTokens)
         {
             _tokens = inputTokens;
@@ -34,7 +37,20 @@ namespace Interpreter
 
         private Statement CreateStatement()
         {
-            if (Match(TokenType.WHILE))
+            if (Match(TokenType.IDENTIFIER))
+            {
+                Token ident = NextToken();
+                if (Match(TokenType.LEFT_PAREN))
+                {
+                    return CreateMethodBody(ident);
+                }
+                if (Match(TokenType.EQUAL))
+                {
+                    return CreateAssignment(ident);
+                }
+                return null;
+            }
+            else if (Match(TokenType.WHILE))
             {
                 return CreateWhile();
             }
@@ -42,6 +58,31 @@ namespace Interpreter
             {
                 return CreateExpression();
             }
+        }
+
+        private Statement CreateMethodBody(Token ident)
+        {
+            Identifier identifier = new Identifier(ident.Value);
+            Token leftParen = NextToken();
+            List<Expression> arguments = new List<Expression>();
+            if (PeekToken().TokenType != TokenType.RIGHT_PAREN)
+            do
+            {
+                if (PeekToken().TokenType == TokenType.COMMA)
+                    NextToken();
+                arguments.Add(CreateExpression());
+            }
+            while (PeekToken().TokenType == TokenType.COMMA);
+            Token rightParen = NextToken();
+            List<Declaration> body = new List<Declaration>();
+            while(PeekToken().TokenType != TokenType.END)
+            {
+                body.Add(CreateDeclaration());
+            }
+            NextToken();
+
+
+            return new MethodBody(identifier, arguments, body);
         }
 
         private Statement CreateWhile()
@@ -74,7 +115,7 @@ namespace Interpreter
                 return CreateMethodDecl();
             }
             //Check for Var declaration
-            else if (_tokens[_index + 1].TokenType == TokenType.TYPE)
+            else if (PeekToken(1).TokenType == TokenType.TYPE)
             {
                 return CreateVarDecl();
             }
@@ -89,12 +130,30 @@ namespace Interpreter
         {
             Token classToken = NextToken();
             Identifier identifier = new Identifier(NextToken().Value);
+
+            Class c = new Class(identifier.value);
+            if (currentClass != null)
+            {
+                currentClass.ParentClass = new Class(currentClass.ClassName);
+                currentClass.ClassName = new string(c.ClassName.ToCharArray());
+            }
+            else
+            {
+                currentClass = new Class(c.ClassName);
+            }
+
             List<Declaration> body = new List<Declaration>();
-            while(!Match(TokenType.END))
+            while (!Match(TokenType.END))
             {
                 body.Add(CreateDeclaration());
             }
+            if (currentClass != null)
+                currentClass = currentClass.ParentClass;
             Token end = NextToken();
+
+            //Add class to environment         
+            Environment.Classes.Add(new Class(identifier.value));
+
             return new ClassDecl(identifier, body);
         }
 
@@ -128,7 +187,7 @@ namespace Interpreter
         private Expression CreateExpression()
         {
             //Check for Assignment
-            if (_tokens[_index + 1].TokenType == TokenType.EQUAL)
+            if (PeekToken().TokenType == TokenType.EQUAL)
             {
                 return CreateAssignment();
             }
@@ -140,9 +199,16 @@ namespace Interpreter
 
         }
 
-        private Expression CreateAssignment()
+        private Expression CreateAssignment(Token ident = null)
         {
-            if (Match(TokenType.IDENTIFIER))
+            if (ident != null)
+            {
+                Identifier identifier = new Identifier(ident.Value);
+                Token Operator = NextToken();
+                Assignment assignment = new Assignment(identifier, CreateExpression());
+                return assignment;
+            }
+            else if (Match(TokenType.IDENTIFIER))
             {
                 Identifier identifier = new Identifier(NextToken().Value);
                 Token Operator = NextToken();
@@ -237,9 +303,9 @@ namespace Interpreter
         private Expression CreatePrimary()
         {
             TokenType type = PeekToken().TokenType;
-            if (type == TokenType.NULL) { return new Literal(null); }
-            if (type == TokenType.TRUE) { return new Literal(true); }
-            if (type == TokenType.FALSE) { return new Literal(false); }
+            if (type == TokenType.NULL) { return new Literal(NextToken().Literal); }
+            if (type == TokenType.TRUE) { return new Literal(NextToken().Literal); }
+            if (type == TokenType.FALSE) { return new Literal(NextToken().Literal); }
 
             if (type == TokenType.NUMBER) { return new Literal(NextToken().Literal); }
             if (type == TokenType.STRING) { return new Literal(NextToken().Literal); }
@@ -265,9 +331,12 @@ namespace Interpreter
             return _tokens[_index++];
         }
 
-        private Token PeekToken()
+        private Token PeekToken(int lookahead = 0)
         {
-            return _tokens[_index];
+            if (_index < _tokens.Count - lookahead)
+                return _tokens[_index + lookahead];
+            else
+                return new Token(TokenType.NONE, "", null, -1);
         }
 
         private Token[] TakeWhile(Func<Token, bool> func)

@@ -1,5 +1,9 @@
-﻿class External
- class internal
+﻿class Foo
 
- end
+end
+
+class Bar
+	class FooBar
+
+	end
 end

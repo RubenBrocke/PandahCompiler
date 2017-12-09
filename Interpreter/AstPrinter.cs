@@ -25,7 +25,7 @@ namespace Interpreter
 
         public string VisitClassDecl(ClassDecl basetype)
         {
-            return Parenthesize("Class", basetype.className, basetype.body.ToArray());
+            return Parenthesize("Class: " + basetype.className.value, basetype.body.ToArray());
         }
 
         public string VisitComparison(Comparison basetype)
@@ -35,7 +35,7 @@ namespace Interpreter
 
         public string VisitDeclaration(Declaration basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Declaration");
         }
 
         public string VisitEquality(Equality basetype)
@@ -45,7 +45,7 @@ namespace Interpreter
 
         public string VisitExpression(Expression basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Expression");
         }
 
         public string VisitGrouping(Grouping expression)
@@ -55,17 +55,17 @@ namespace Interpreter
 
         public string VisitIdentifier(Identifier basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Identifier " + basetype.value);
         }
 
         public string VisitIf(If @if)
         {
-            throw new NotImplementedException();
+            return Parenthesize("IF " + VisitExpression(@if.condition), @if.declarations.ToArray());
         }
 
         public string VisitLiteral(Literal literal)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Literal " + literal.value);
         }
 
         public string VisitLogic(Logic basetype)
@@ -73,9 +73,14 @@ namespace Interpreter
             return Parenthesize("Logic", basetype.left, basetype.right);
         }
 
+        public string VisitMethodBody(MethodBody methodBody)
+        {
+            return Parenthesize("MethodBody " + VisitIdentifier(methodBody.identifier), methodBody.body.ToArray());
+        }
+
         public string VisitMethodDecl(MethodDecl basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("MethodDecl " + VisitIdentifier(basetype.methodName) + " " + VisitType(basetype.returnType), basetype.arguments.ToArray());
         }
 
         public string VisitMultiplication(Multiplication basetype)
@@ -85,42 +90,42 @@ namespace Interpreter
 
         public string VisitNumber(Number basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Number " + basetype.value);
         }
 
         public string VisitProgramStart(ProgramStart basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Program", basetype.declarations.ToArray());
         }
 
         public string VisitStatement(Statement basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Statement ");
         }
 
         public string VisitString(String basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("String " + basetype.value);
         }
 
         public string VisitType(Type basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("Type " + basetype.value);
         }
 
         public string VisitUnary(Unary expression)
         {
-            return Parenthesize("Unart", expression.right);
+            return Parenthesize("Unary", expression.right);
         }
 
         public string VisitVarDecl(VarDecl basetype)
         {
-            throw new NotImplementedException();
+            return Parenthesize("VarDecl " + basetype.varName, basetype.varType);
         }
 
         public string VisitWhile(While @while)
         {
-            throw new NotImplementedException();
+            return Parenthesize("While " + VisitExpression(@while.condition), @while.declarations.ToArray());
         }
 
         private string Parenthesize(string name, params BaseType[] expressions)

@@ -55,7 +55,7 @@ namespace Interpreter
                     case '!': if (PeekChar() == '=') { AddToken(TokenType.BANG_EQUAL, "!="); } else { AddToken(TokenType.BANG, "!"); } break;
                     case '>': if (PeekChar() == '=') { AddToken(TokenType.GREATER_EQUAL, ">="); } else { AddToken(TokenType.GREATER, ">"); } break;
                     case '<': if (PeekChar() == '=') { AddToken(TokenType.LESS_EQUAL, "<="); } else if (PeekChar() == '-') { AddToken(TokenType.ARROW, "<-"); _index++;} else { AddToken(TokenType.LESS, "<"); } break;
-                    case ':': if (PeekChar() == ':') { AddToken(TokenType.TYPE, "::"); _index++; } else { new CompilerException("Expected :: at line " + _line); } break;
+                    case ':': if (PeekChar() == ':') { AddToken(TokenType.TYPE, "::"); } else { new CompilerException("Expected :: at line " + _line); } break;
                     case '#': while(PeekChar() != '\n') { NextChar(); } break;
                     case '/':
                         if (PeekChar() == '/')
@@ -90,7 +90,7 @@ namespace Interpreter
                             string IdString = new string(TakeWhile(n => Regex.IsMatch(n.ToString(), Syntax.VarRegex)));
                             if (Syntax.Keywords.ContainsKey(c + IdString))
                                 //It's a keyword
-                                _tokenList.Add(new Token(Syntax.Keywords[c + IdString], c + IdString, null, _line));
+                                _tokenList.Add(new Token(Syntax.Keywords[c + IdString], c + IdString, c + IdString, _line));
                             else
                             //Create a new token
                             _tokenList.Add(new Token(TokenType.IDENTIFIER, c + IdString, null, _line));
@@ -128,6 +128,10 @@ namespace Interpreter
         private void AddToken(TokenType tokenType, string value)
         {
             _tokenList.Add(new Token(tokenType, value, null, _line));
+            for (int i = 0; i < value.Length - 1; i++)
+            {
+                NextChar();
+            }
         }
 
         private Char NextChar()

@@ -18,7 +18,10 @@ namespace Interpreter
             Parser parser = new Parser(tokens);
             parser.Parse();
             AstPrinter astPrinter = new AstPrinter();
-            astPrinter.VisitProgramStart((ProgramStart)parser.Root);
+            string AST = astPrinter.VisitProgramStart(parser.Root);
+            Console.WriteLine(AST);
+            Compiler compiler = new Compiler();
+            compiler.Compile("output.txt", parser.Root);
             Console.ReadLine();
         }
     }
