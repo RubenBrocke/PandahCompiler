@@ -138,7 +138,11 @@ namespace Interpreter
 
         public string VisitMethodBody(MethodBody methodBody)
         {
-            throw new NotImplementedException();
+            string contents = "";
+            contents += "// Method: " + methodBody.identifier;
+            contents += "\n";
+
+            return contents;
         }
 
         public string VisitMethodDecl(MethodDecl basetype)

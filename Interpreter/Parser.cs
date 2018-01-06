@@ -134,12 +134,16 @@ namespace Interpreter
             Class c = new Class(identifier.value);
             if (currentClass != null)
             {
-                currentClass.ParentClass = new Class(currentClass.ClassName);
-                currentClass.ClassName = new string(c.ClassName.ToCharArray());
+                // Make a sub class
+                Class tempClass = currentClass;
+                currentClass = c;
+                currentClass.ParentClass = tempClass;
+                tempClass.Classes.Add(currentClass);
             }
             else
             {
-                currentClass = new Class(c.ClassName);
+                currentClass = c;
+                Environment.Classes.Add(currentClass);
             }
 
             List<Declaration> body = new List<Declaration>();
@@ -151,8 +155,6 @@ namespace Interpreter
                 currentClass = currentClass.ParentClass;
             Token end = NextToken();
 
-            //Add class to environment         
-            Environment.Classes.Add(new Class(identifier.value));
 
             return new ClassDecl(identifier, body);
         }
@@ -162,6 +164,24 @@ namespace Interpreter
             Identifier identifier = new Identifier(NextToken().Value);
             Token typeOp = NextToken();
             Type type = new Type(NextToken().Value);
+
+            Variable variable = new Variable(identifier.value);
+
+            if (currentMethod == null)
+            {
+                if (currentClass == null)
+                {
+                    Environment.Variables.Add(variable);
+                }
+                else
+                {
+                    currentClass.Variables.Add(variable);
+                }
+            }
+            else
+            {
+                currentMethod.Variables.Add(variable);
+            }
 
             return new VarDecl(identifier, type);
         }
@@ -180,6 +200,24 @@ namespace Interpreter
                 arguments.Add(new Type(NextToken().Value));
             }
             while (PeekToken().TokenType == TokenType.COMMA);
+
+            Method m = new Method(identifier.value, arguments.ToArray());
+
+            if (currentMethod == null)
+            {
+                if (currentClass == null)
+                {
+                    Environment.Methods.Add(m);
+                }
+                else
+                {
+                    currentClass.Methods.Add(m);
+                }
+            }
+            else
+            {
+                currentMethod.Methods.Add(m);
+            }
 
             return new MethodDecl(identifier, type, arguments);
         }
@@ -309,6 +347,7 @@ namespace Interpreter
 
             if (type == TokenType.NUMBER) { return new Literal(NextToken().Literal); }
             if (type == TokenType.STRING) { return new Literal(NextToken().Literal); }
+            if (type == TokenType.IDENTIFIER) { return new Identifier(NextToken().Value); }
 
             if (type == TokenType.LEFT_PAREN)
             {

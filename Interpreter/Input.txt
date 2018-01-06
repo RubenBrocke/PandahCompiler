@@ -4,6 +4,6 @@ end
 
 class Bar
 	class FooBar
-
+	A :: Int
 	end
-end
+end()

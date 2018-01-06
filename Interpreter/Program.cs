@@ -20,8 +20,11 @@ namespace Interpreter
             AstPrinter astPrinter = new AstPrinter();
             string AST = astPrinter.VisitProgramStart(parser.Root);
             Console.WriteLine(AST);
-            Compiler compiler = new Compiler();
-            compiler.Compile("output.txt", parser.Root);
+            //Compiler compiler = new Compiler();
+            //compiler.Compile("output.txt", parser.Root);
+            Interpreter interpreter = new Interpreter(parser.Root);
+            interpreter.Interprete();
+            Console.WriteLine(Environment.PrintEnvironment());
             Console.ReadLine();
         }
     }
