@@ -259,10 +259,13 @@ namespace Interpreter
                     methodBody.parentMethod.Variables.Add(v);
                 }
             }
-            for (int i = 0; i < methodBody.arguments.Count; i++)
+            if (methodBody.arguments.Where(n => n is Identifier).Count() > 0)
             {
-                object result = methodBody.Caller.arguments[i].Accept(this);
-                methodBody.parentMethod.Variables.ElementAt(i).Value = result;
+                for (int i = 0; i < methodBody.arguments.Count; i++)
+                {
+                    object result = methodBody.Caller.arguments[i].Accept(this);
+                    methodBody.parentMethod.Variables.ElementAt(i).Value = result;
+                }
             }
             CurrentMethod = methodBody.parentMethod;
             foreach (Declaration item in methodBody.body)
@@ -456,8 +459,9 @@ namespace Interpreter
                 //Verify arguments
                 for (int i = 0; i < methodBody.arguments.Count; i++)
                 {
-                    object result = methodCall.arguments[i].Accept(this);
-                    if (methodCall.arguments[i] != methodBody.arguments[i] && !(methodBody.arguments[i] is Identifier))
+                    object result1 = methodCall.arguments[i].Accept(this);
+                    object result2 = methodBody.arguments[i].Accept(this);
+                    if (!(result1.Equals(result2)) && !(methodBody.arguments[i] is Identifier))
                         correct = false;
                 }
                 if (correct)

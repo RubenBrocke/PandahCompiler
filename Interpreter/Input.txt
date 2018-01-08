@@ -4,11 +4,15 @@
 	Move :: Void <- Int
 	
 	# Implementations
+	Move(200) do
+		X = 1
+	end
+
 	Move(x) do
 		X = X + x
 	end
 
 	#Logic
 	X = 1
-	Move(1) 
+	Move(200) 
 end
