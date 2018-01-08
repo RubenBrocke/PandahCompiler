@@ -22,12 +22,11 @@ namespace Interpreter
             { "fun",    TokenType.FUN },
             { "if",     TokenType.IF },
             { "null",   TokenType.NULL },
-            { "print",  TokenType.PRINT },
             { "return", TokenType.RETURN },
             { "this",   TokenType.THIS },
             { "true",   TokenType.TRUE },
             { "while",  TokenType.WHILE },
-            { "end",    TokenType.END}
+            { "end",    TokenType.END},
         };
     }
 }

@@ -19,6 +19,7 @@ namespace Interpreter
             CurrentClass = null;
             CurrentMethod = null;
         }
+    
         public object VisitAddition(Addition basetype)
         {
             object left = basetype.left.Accept(this);
@@ -195,20 +196,12 @@ namespace Interpreter
 
             if (identifierValue is Variable v)
                 return v.Value;
-            if (identifierValue is Method m)
-            {
-                VisitMethodCall(m);
+            else if (identifierValue is Method m)
                 return m.MethodName;
-            }
-            if (identifierValue is Class c)
+            else if (identifierValue is Class c)
                 return c.ClassName;
             else
                 new CompilerException("Identifier: " + identifierName + " is an unknown type");
-            return null;
-        }
-
-        private object VisitMethodCall(Method m)
-        {           
             return null;
         }
 
@@ -472,6 +465,12 @@ namespace Interpreter
             }
             if (bestBody != null)
             {
+                if(methodCall.calledMethod.MethodName == "print")
+                {
+                    Console.WriteLine(methodCall.arguments[0].Accept(this));
+                    return null;
+                }
+                    
                 bestBody.Caller = methodCall;
                 return bestBody.Accept(this);
             }

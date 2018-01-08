@@ -87,6 +87,22 @@ namespace Interpreter
 
             return stringBuilder.ToString();
         }
+
+        public static void AddDefaultFunctions()
+        {
+            Methods.Add(DefaultPrintMethod());
+        }
+
+        private static Method DefaultPrintMethod()
+        {
+            Method print = new Method("print", new Type("Void"), new Type[] { new Type("String") });
+            Identifier printIdentifier = new Identifier("print");
+            List<Expression> args = new List<Expression>() { new Identifier("printString") };
+            MethodBody printBody = new MethodBody(printIdentifier, args, null, null);
+            print.Implementations.Add(printBody);            
+
+            return print;
+        }
     }
 
     public class Class
@@ -119,7 +135,10 @@ namespace Interpreter
             Method m = Methods.FirstOrDefault(n => n.MethodName == methodName);
             if (m == null)
             {
-                throw new CompilerException("Could not find method: " + m.MethodName);
+                // Try to find it as a global method
+                m = Environment.FindMethod(methodName);
+                if (m == null)
+                    new CompilerException("Could not find method: " + m.MethodName);
             }
             return m;
         }

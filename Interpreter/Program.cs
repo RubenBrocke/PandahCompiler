@@ -15,6 +15,7 @@ namespace Interpreter
             Scanner scanner = new Scanner(code);
             List<Token> tokens = scanner.Scan();
             scanner.PrintTokens();
+            Environment.AddDefaultFunctions();
             Parser parser = new Parser(tokens);
             parser.Parse();
             AstPrinter astPrinter = new AstPrinter();
@@ -26,6 +27,7 @@ namespace Interpreter
             interpreter.Interprete();
             Console.WriteLine(Environment.PrintEnvironment());
             Console.ReadLine();
+
         }
     }
 }

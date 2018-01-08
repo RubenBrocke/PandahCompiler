@@ -42,7 +42,7 @@ namespace Interpreter
                 Token ident = NextToken();
                 if (Match(TokenType.LEFT_PAREN))
                 {
-                    if (PeekToken(3).Value == "do")
+                    if (_tokens[_tokens.FindIndex(_index, n => n.Value == ")") + 1].Value == "do")
                     {
                         return CreateMethodBody(ident);
                     }
@@ -87,7 +87,7 @@ namespace Interpreter
             {
                 body.Add(CreateDeclaration());
             }
-            NextToken();
+            NextToken(); // End token
 
             Method m;
             //Find Parent Method
@@ -401,17 +401,17 @@ namespace Interpreter
 
         private Expression CreateMethodCall(Token token)
         {
-            // Move 1
             NextToken();
             List<Expression> arguments = new List<Expression>();
-            do
-            {
-                if (PeekToken().TokenType == TokenType.COMMA)
-                    NextToken();
-                Expression o = CreateExpression();
-                arguments.Add(o);
-            }
-            while (PeekToken().TokenType == TokenType.COMMA);
+            if (PeekToken().TokenType != TokenType.RIGHT_PAREN)
+                do
+                {
+                    if (PeekToken().TokenType == TokenType.COMMA)
+                        NextToken();
+                    Expression o = CreateExpression();
+                    arguments.Add(o);
+                }
+                while (PeekToken().TokenType == TokenType.COMMA);
             Match(TokenType.RIGHT_PAREN);
             NextToken();
 

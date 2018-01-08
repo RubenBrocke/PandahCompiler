@@ -1,18 +1,9 @@
-﻿class Animal
-	# Identifiers
-	X :: Int
-	Move :: Void <- Int
-	
-	# Implementations
-	Move(200) do
-		X = 1
-	end
+﻿class Greeter
+  Greet :: Void <- Void 
 
-	Move(x) do
-		X = X + x
-	end
+  Greet() do
+	print("Hello World")
+  end
 
-	#Logic
-	X = 1
-	Move(200) 
+  Greet()
 end
