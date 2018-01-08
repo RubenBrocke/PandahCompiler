@@ -1,9 +1,14 @@
-﻿class Foo
-
-end
-
-class Bar
-	class FooBar
-	A :: Int
+﻿class Animal
+	# Identifiers
+	X :: Int
+	Move :: Void <- Int
+	
+	# Implementations
+	Move(x) do
+		X = X + x
 	end
-end()
+
+	#Logic
+	X = 1
+	Move(1) 
+end

@@ -78,6 +78,11 @@ namespace Interpreter
             return Parenthesize("MethodBody " + VisitIdentifier(methodBody.identifier), methodBody.body.ToArray());
         }
 
+        public string VisitMethodCall(MethodCall methodCall)
+        {
+            return Parenthesize("Method Call " + methodCall.identifier);
+        }
+
         public string VisitMethodDecl(MethodDecl basetype)
         {
             return Parenthesize("MethodDecl " + VisitIdentifier(basetype.methodName) + " " + VisitType(basetype.returnType), basetype.arguments.ToArray());

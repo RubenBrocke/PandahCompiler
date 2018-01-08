@@ -29,6 +29,7 @@ namespace Interpreter
         T VisitWhile(While @while);
         T VisitIf(If @if);
         T VisitMethodBody(MethodBody methodBody);
+        T VisitMethodCall(MethodCall methodCall);
     }
     public abstract class BaseType
     {
@@ -344,6 +345,25 @@ namespace Interpreter
         }
     }
 
+    public class MethodCall : Expression
+    {
+        public object value;
+        public string identifier;
+        public Expression[] arguments;
+        public Method calledMethod;
+
+        public MethodCall(string identifier, params Expression[] arguments)
+        {
+            this.identifier = identifier;
+            this.arguments = arguments;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitMethodCall(this);
+        }
+    }
+
     public class While : Statement
     {
         public Expression condition;
@@ -383,12 +403,15 @@ namespace Interpreter
         public Identifier identifier;
         public List<Expression> arguments;
         public List<Declaration> body;
+        public Method parentMethod;
+        public MethodCall Caller;
 
-        public MethodBody(Identifier identifier, List<Expression> arguments, List<Declaration> body)
+        public MethodBody(Identifier identifier, List<Expression> arguments, List<Declaration> body, Method parentMethod)
         {
             this.identifier = identifier;
             this.arguments = arguments;
             this.body = body;
+            this.parentMethod = parentMethod;
         }
 
         public override T Accept<T>(IVisitor<T> visitor)

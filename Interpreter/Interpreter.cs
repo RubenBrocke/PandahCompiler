@@ -19,14 +19,17 @@ namespace Interpreter
             CurrentClass = null;
             CurrentMethod = null;
         }
-
         public object VisitAddition(Addition basetype)
         {
             object left = basetype.left.Accept(this);
             object right = basetype.right.Accept(this);
-            return (int)left + (int)right;
+            if (basetype.Operator.TokenType == TokenType.PLUS)
+                return (int)left + (int)right;
+            if (basetype.Operator.TokenType == TokenType.MINUS)
+                return (int)left - (int)right;
+            new CompilerException("Could not do Addition or Subtraction");
+            return null;
         }
-
         public object VisitAssignment(Assignment basetype)
         {
             string variableName = (string)basetype.identifier.value;
@@ -62,12 +65,10 @@ namespace Interpreter
 
             return basetype.Value;
         }
-
         public object VisitBlock(Block basetype)
         {
             throw new NotImplementedException();
-        }
-
+        }    
         public object VisitClassDecl(ClassDecl basetype)
         {
             string className = (string)basetype.className.Accept(this);
@@ -80,6 +81,7 @@ namespace Interpreter
                 {
                     new CompilerException("Class: " + c.ClassName + " Could not be found");
                 }
+                c = Environment.Classes.First(n => n.ClassName == c.ClassName);
             }
             else
             {
@@ -88,6 +90,7 @@ namespace Interpreter
                 {
                     new CompilerException("Variable: " + c.ClassName + " Could not be found");
                 }
+                c = CurrentClass.Classes.First(n => n.ClassName == c.ClassName);
             }
 
             CurrentClass = c;
@@ -101,10 +104,23 @@ namespace Interpreter
 
             return c;
         }
-
         public object VisitComparison(Comparison basetype)
         {
-            throw new NotImplementedException();
+            object left = basetype.left.Accept(this);
+            object right = basetype.right.Accept(this);
+            switch (basetype.Operator.TokenType)
+            {
+                case TokenType.LESS:
+                    return (int)left < (int)right;
+                case TokenType.LESS_EQUAL:
+                    return (int)left <= (int)right;
+                case TokenType.GREATER:
+                    return (int)left > (int)right;
+                case TokenType.GREATER_EQUAL:
+                    return (int)left >= (int)right;
+            }
+            new CompilerException("Could not do Greater or Less than");
+            return null;
         }
 
         public object VisitDeclaration(Declaration basetype)
@@ -114,7 +130,17 @@ namespace Interpreter
 
         public object VisitEquality(Equality basetype)
         {
-            throw new NotImplementedException();
+            object left = basetype.left.Accept(this);
+            object right = basetype.right.Accept(this);
+            switch (basetype.Operator.TokenType)
+            {
+                case TokenType.EQUAL_EQUAL:
+                    return left == right;
+                case TokenType.BANG_EQUAL:
+                    return left != right;
+            }
+            new CompilerException("Could not do Equal or Not Equal");
+            return null;
         }
 
         public object VisitExpression(Expression basetype)
@@ -124,7 +150,7 @@ namespace Interpreter
 
         public object VisitGrouping(Grouping basetype)
         {
-            throw new NotImplementedException();
+            return basetype.expr.Accept(this);
         }
 
         public object VisitIdentifier(Identifier basetype)
@@ -151,7 +177,14 @@ namespace Interpreter
                 if (CurrentMethod != null)
                 {
                     // In a method within a class
+                    // Try to find it within the method
                     identifierValue = CurrentMethod.FindIdentifier(identifierName);
+
+                    if (identifierValue == null)
+                    {
+                        // It could also be in the class
+                        identifierValue = identifierValue = CurrentClass.FindIdentifier(identifierName);
+                    }
                 }
                 else
                 {
@@ -163,7 +196,10 @@ namespace Interpreter
             if (identifierValue is Variable v)
                 return v.Value;
             if (identifierValue is Method m)
+            {
+                VisitMethodCall(m);
                 return m.MethodName;
+            }
             if (identifierValue is Class c)
                 return c.ClassName;
             else
@@ -171,9 +207,22 @@ namespace Interpreter
             return null;
         }
 
+        private object VisitMethodCall(Method m)
+        {           
+            return null;
+        }
+
         public object VisitIf(If @if)
         {
-            throw new NotImplementedException();
+            bool ifResult = (bool)@if.condition.Accept(this);
+            if (ifResult)
+            {
+                foreach (Declaration item in @if.declarations)
+                {
+                    item.Accept(this);
+                }
+            }
+            return null;
         }
 
         public object VisitLiteral(Literal literal)
@@ -183,27 +232,114 @@ namespace Interpreter
 
         public object VisitLogic(Logic basetype)
         {
-            throw new NotImplementedException();
+            object left = basetype.left.Accept(this);
+            object right = basetype.right.Accept(this);
+            switch (basetype.Operator.TokenType)
+            {
+                case TokenType.AND:
+                    return (bool)left && (bool)right;
+                case TokenType.BANG_EQUAL:
+                    return (bool)left || (bool)right;
+            }
+            new CompilerException("Could not do And or OR");
+            return null;
         }
 
         public object VisitMethodBody(MethodBody methodBody)
         {
-            throw new NotImplementedException();
+            if (methodBody.Caller == null)
+                return null;
+            foreach (Expression item in methodBody.arguments)
+            {
+                if (item is Identifier id)
+                {
+                    Variable v = new Variable(id.value);
+                    v.ParentMethod = methodBody.parentMethod;
+                    v.ParentClass = methodBody.parentMethod.ParentClass;
+                    methodBody.parentMethod.Variables.Add(v);
+                }
+            }
+            for (int i = 0; i < methodBody.arguments.Count; i++)
+            {
+                object result = methodBody.Caller.arguments[i].Accept(this);
+                methodBody.parentMethod.Variables.ElementAt(i).Value = result;
+            }
+            CurrentMethod = methodBody.parentMethod;
+            foreach (Declaration item in methodBody.body)
+            {
+                item.Accept(this);
+            }
+            CurrentMethod = CurrentMethod.ParentMethod;
+
+            return null; //TODO: Return returnvalue
         }
 
         public object VisitMethodDecl(MethodDecl basetype)
         {
-            throw new NotImplementedException();
+            string methodName = (string)basetype.methodName.value;
+            Method m = new Method(methodName, null, null);
+
+            if (CurrentClass == null)
+            {
+                if (CurrentMethod == null)
+                {
+                    // Global scope
+                    if (!Environment.Methods.Any(n => n.MethodName == m.MethodName))
+                    {
+                        new CompilerException("Method: " + m.MethodName + " Could not be found");
+                    }
+                }
+                else
+                {
+                    // Method in global scope
+                    if (!CurrentMethod.Methods.Any(n => n.MethodName == m.MethodName))
+                    {
+                        new CompilerException("Method: " + m.MethodName + " Could not be found");
+                    }
+                }
+            }
+            else
+            {
+                // In a class
+                if (CurrentMethod == null)
+                {
+                    // In a method within a class
+                    if (!CurrentClass.Methods.Any(n => n.MethodName == m.MethodName))
+                    {
+                        new CompilerException("Method: " + m.MethodName + " Could not be found");
+                    }
+                }
+                else
+                {
+                    // In a class and not in a method
+                    if (!CurrentMethod.Methods.Any(n => n.MethodName == m.MethodName))
+                    {
+                        new CompilerException("Method: " + m.MethodName + " Could not be found");
+                    }
+                }
+            }
+
+            return m;
         }
 
         public object VisitMultiplication(Multiplication basetype)
         {
-            throw new NotImplementedException();
+            object left = basetype.left.Accept(this);
+            object right = basetype.right.Accept(this);
+            switch (basetype.Operator.TokenType)
+            {
+                case TokenType.AND:
+                    return (int)left * (int)right;
+                case TokenType.BANG_EQUAL:
+                    return (int)left / (int)right;
+            }
+            new CompilerException("Could not do Multiplication or Division");
+            return null;
         }
 
         public object VisitNumber(Number basetype)
         {
-            throw new NotImplementedException();
+            return basetype.value;
         }
 
         public object VisitProgramStart(ProgramStart basetype)
@@ -222,17 +358,26 @@ namespace Interpreter
 
         public object VisitString(String basetype)
         {
-            throw new NotImplementedException();
+            return basetype.value;
         }
 
         public object VisitType(Type basetype)
         {
-            throw new NotImplementedException();
+            return basetype.value;
         }
 
         public object VisitUnary(Unary basetype)
         {
-            throw new NotImplementedException();
+            object right = basetype.right.Accept(this);
+            switch (basetype.Operator.TokenType)
+            {
+                case TokenType.BANG:
+                    return !(bool)right;
+                case TokenType.MINUS:
+                    return -(int)right;
+            }
+            new CompilerException("Could not do Negation or Bang");
+            return null;
         }
 
         public object VisitVarDecl(VarDecl basetype)
@@ -285,12 +430,48 @@ namespace Interpreter
 
         public object VisitWhile(While @while)
         {
-            throw new NotImplementedException();
+            bool whileResult = bool.Parse((string)@while.condition.Accept(this));
+            while(whileResult)
+            {
+                foreach (Declaration item in @while.declarations)
+                {
+                    item.Accept(this);
+                }
+                whileResult = bool.Parse((string)@while.condition.Accept(this));
+            }
+            return null;
         }
 
         public object Interprete()
         {
             return VisitProgramStart(Root);
+        }
+
+        public object VisitMethodCall(MethodCall methodCall)
+        {
+            MethodBody bestBody = null;
+            foreach(MethodBody methodBody in methodCall.calledMethod.Implementations)
+            {
+                bool correct = true;
+                //Verify arguments
+                for (int i = 0; i < methodBody.arguments.Count; i++)
+                {
+                    object result = methodCall.arguments[i].Accept(this);
+                    if (methodCall.arguments[i] != methodBody.arguments[i] && !(methodBody.arguments[i] is Identifier))
+                        correct = false;
+                }
+                if (correct)
+                {
+                    bestBody = methodBody;
+                    break;
+                }
+            }
+            if (bestBody != null)
+            {
+                bestBody.Caller = methodCall;
+                return bestBody.Accept(this);
+            }
+            return null;
         }
     }
 }

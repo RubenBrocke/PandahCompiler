@@ -237,5 +237,10 @@ namespace Interpreter
             System.Diagnostics.Process.Start("code", filePath);
             Console.WriteLine("File Created: " + filePath);
         }
+
+        public string VisitMethodCall(MethodCall methodCall)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

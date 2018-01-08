@@ -42,7 +42,14 @@ namespace Interpreter
                 Token ident = NextToken();
                 if (Match(TokenType.LEFT_PAREN))
                 {
-                    return CreateMethodBody(ident);
+                    if (PeekToken(3).Value == "do")
+                    {
+                        return CreateMethodBody(ident);
+                    }
+                    else
+                    {
+                        return CreateMethodCall(ident);
+                    }
                 }
                 if (Match(TokenType.EQUAL))
                 {
@@ -74,6 +81,7 @@ namespace Interpreter
             }
             while (PeekToken().TokenType == TokenType.COMMA);
             Token rightParen = NextToken();
+            Token doToken = NextToken();
             List<Declaration> body = new List<Declaration>();
             while(PeekToken().TokenType != TokenType.END)
             {
@@ -81,23 +89,46 @@ namespace Interpreter
             }
             NextToken();
 
+            Method m;
+            //Find Parent Method
+            if (currentMethod == null)
+            {
+                if (currentClass == null)
+                {
+                    m = Environment.FindMethod(identifier.value);
+                }
+                else
+                {
+                    m = currentClass.FindMethod(identifier.value);
+                }
+            }
+            else
+            {
+                m = currentMethod.FindMethod(identifier.value);
+            }
 
-            return new MethodBody(identifier, arguments, body);
+            if (m == null)
+                new CompilerException("Cannot find parent method of: " + identifier.value);
+            MethodBody methodBody = new MethodBody(identifier, arguments, body, m);
+            m.Implementations.Add(methodBody);
+            return methodBody;
         }
 
         private Statement CreateWhile()
         {
             Token whileToken = NextToken();
             Expression Condition = CreateExpression();
-            if (PeekToken().Value != "DO")
+            if (PeekToken().Value != "do")
             {
                 new CompilerException("EXPECTED DO");
             }
+            NextToken();
             List<Declaration> declarations = new List<Declaration>();
-            while(PeekToken().Value != "END")
+            while(PeekToken().Value != "end")
             {
                 declarations.Add(CreateDeclaration());
             }
+            NextToken();
 
             return new While(Condition, declarations); 
         }
@@ -201,7 +232,7 @@ namespace Interpreter
             }
             while (PeekToken().TokenType == TokenType.COMMA);
 
-            Method m = new Method(identifier.value, arguments.ToArray());
+            Method m = new Method(identifier.value, type, arguments.ToArray());
 
             if (currentMethod == null)
             {
@@ -211,11 +242,14 @@ namespace Interpreter
                 }
                 else
                 {
+                    m.ParentClass = currentClass;
                     currentClass.Methods.Add(m);
                 }
             }
             else
             {
+                m.ParentMethod = currentMethod;
+                m.ParentClass = currentMethod.ParentClass;
                 currentMethod.Methods.Add(m);
             }
 
@@ -361,8 +395,53 @@ namespace Interpreter
                 return new Grouping(grouping);
             }
 
-            new CompilerException("COULD NOT PARSE: " + NextToken().Value);
+            new CompilerException("COULD NOT PARSE: " + NextToken().TokenType.ToString());
             return new Expression();
+        }
+
+        private Expression CreateMethodCall(Token token)
+        {
+            // Move 1
+            NextToken();
+            List<Expression> arguments = new List<Expression>();
+            do
+            {
+                if (PeekToken().TokenType == TokenType.COMMA)
+                    NextToken();
+                Expression o = CreateExpression();
+                arguments.Add(o);
+            }
+            while (PeekToken().TokenType == TokenType.COMMA);
+            Match(TokenType.RIGHT_PAREN);
+            NextToken();
+
+            Method method;
+
+            if (currentMethod == null)
+            {
+                if (currentClass == null)
+                {
+                    method = Environment.FindMethod(token.Value);
+                }
+                else
+                {
+                    method = currentClass.FindMethod(token.Value);
+                }
+            }
+            else
+            {
+                method = currentMethod.FindMethod(token.Value);
+            }
+
+            if (method == null)
+                new CompilerException("Could not find method: " + token.Value);
+
+            // It's a function call
+            MethodCall m = new MethodCall(token.Value, arguments.ToArray())
+            {
+                calledMethod = method
+            };
+            return m;
         }
 
         private Token NextToken()

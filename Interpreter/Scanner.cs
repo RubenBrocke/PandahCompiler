@@ -127,10 +127,11 @@ namespace Interpreter
 
         private void AddToken(TokenType tokenType, string value)
         {
-            _tokenList.Add(new Token(tokenType, value, null, _line));
+            _tokenList.Add(new Token(tokenType, value, value, _line));
             for (int i = 0; i < value.Length - 1; i++)
             {
-                NextChar();
+                if (tokenType != TokenType.STRING)
+                    NextChar();
             }
         }
 

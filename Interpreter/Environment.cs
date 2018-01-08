@@ -94,6 +94,7 @@ namespace Interpreter
         public string ClassName { get; set; }
         public Class ParentClass { get; set; }
 
+        public List<Class> Instances = new List<Class>();
         public List<Class> Classes = new List<Class>();
         public List<Method> Methods = new List<Method>();
         public List<Variable> Variables = new List<Variable>();
@@ -180,17 +181,21 @@ namespace Interpreter
     public class Method
     {
         public string MethodName { get; set; }
+        public Type ReturnType { get; set; }
         public Type[] ArgumentTypes { get; set; }
         public Class ParentClass { get; set; }
         public Method ParentMethod { get; set; }
+        public List<MethodBody> Implementations { get; set; }
 
         public List<Method> Methods = new List<Method>();
         public List<Variable> Variables = new List<Variable>();
 
-        public Method(string name, Type[] arguments)
+        public Method(string name, Type returnType, Type[] arguments)
         {
             MethodName = name;
+            ReturnType = returnType;
             ArgumentTypes = arguments;
+            Implementations = new List<MethodBody>();
         }
 
         public Method FindMethod(string methodName)
@@ -208,9 +213,29 @@ namespace Interpreter
             Variable v = Variables.FirstOrDefault(n => n.VariableName == varName);
             if (v == null)
             {
+                v = FindVariableRec(varName, this);
+            }
+            if (v == null)
+            {
                 throw new CompilerException("Could not find variable: " + v.VariableName);
             }
             return v;
+        }
+
+        private Variable FindVariableRec(string varName, Method m)
+        {
+            Variable variable = null;
+            // Look in the parent method
+            if (m.ParentMethod != null)
+                variable = FindVariableRec(varName, m.ParentMethod);
+            // If it's not in any parent method
+            if (variable == null)
+            {
+                // Look in the parent class
+               variable = m.ParentClass.FindVariable(varName);
+            }
+
+            return variable;
         }
 
         public object FindIdentifier(string idName)
@@ -225,10 +250,12 @@ namespace Interpreter
         public void PrintMethod()
         {
             Environment.stringBuilder.Append(MethodName + '\n');
+            Environment.stringBuilder.Append("Return type: " + '\n');
+            Environment.stringBuilder.Append("    " + ReturnType.value + '\n');
             Environment.stringBuilder.Append("Argument types: " + '\n');
             foreach (Type T in ArgumentTypes)
             {
-                Environment.stringBuilder.Append(T.ToString());
+                Environment.stringBuilder.Append("    " + T.value + '\n');
             }
             if (Methods.Count > 0)
             {
