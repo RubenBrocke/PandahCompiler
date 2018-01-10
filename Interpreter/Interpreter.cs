@@ -9,86 +9,147 @@ namespace Interpreter
 {
     public class Interpreter : IVisitor<object>
     {
+        /// <summary>
+        /// The root of the program
+        /// </summary>
         public ProgramStart Root { get; private set; }
+
+        /// <summary>
+        /// The class we're currently interpreting
+        /// </summary>
         public Class CurrentClass { get; private set; }
+
+        /// <summary>
+        /// The method we're currently interpreting
+        /// </summary>
         public Method CurrentMethod { get; private set; }
 
+        /// <summary>
+        /// The constructor of the interpreter
+        /// </summary>
+        /// <param name="root">The place to start interpreting from</param>
         public Interpreter(ProgramStart root)
         {
             Root = root;
             CurrentClass = null;
             CurrentMethod = null;
         }
-    
+        
+        /// <summary>
+        /// Interpret an addition
+        /// </summary>
+        /// <param name="basetype">The addition</param>
+        /// <returns>The value of the addition</returns>
         public object VisitAddition(Addition basetype)
         {
+            // Get the value of the left part of the addition
             object left = basetype.left.Accept(this);
+            // Get the value of the right part of the addition
             object right = basetype.right.Accept(this);
+            // If the operator is the PLUS operator
             if (basetype.Operator.TokenType == TokenType.PLUS)
+                // Return left PLUS right
                 return (int)left + (int)right;
+            // If the operator is the MINUS operator
             if (basetype.Operator.TokenType == TokenType.MINUS)
+                // Return left MINUS right
                 return (int)left - (int)right;
+            // If the functions hasnt ended by now something happened and we should throw an error
             new CompilerException("Could not do Addition or Subtraction");
             return null;
         }
+
+        /// <summary>
+        /// Interpret an assignment
+        /// </summary>
+        /// <param name="basetype">The assignment</param>
+        /// <returns>The value of the right side of the assignment (making it an expression)</returns>
         public object VisitAssignment(Assignment basetype)
         {
+            // The name of the variable to assign to
             string variableName = (string)basetype.identifier.value;
+            // The vale to assign t the variable
             object newValue = basetype.expression.Accept(this);
 
+            // If we're not in a class (Global scope)
             if (CurrentClass == null)
             {            
+                // If we're not in a Method in the global scope
                 if (CurrentMethod == null)
                 {
-                    // Global scope
+                    // Assign the value to a variable in the global scope
                     Environment.FindVariable(variableName).Value = newValue;
                 }
+                // If we're in a method within the global scope
                 else
                 {
-                    // Method in global scope
+                    // Assign the value to the variable within the method (or above)
                     CurrentMethod.FindVariable(variableName).Value = newValue;
                 }
             }
+            // If we're within a class
             else
             {
-                // In a class
+                // If we're not in a method within a clas
                 if (CurrentMethod != null)
                 {
-                    // In a method within a class
+                    // Assign the value to a variable within the class (or above)
                     CurrentMethod.FindVariable(variableName).Value = newValue;
                 }
+                // If we're in a method within a class
                 else
                 {
-                    // In a class and not in a method
+                    // Assign the value to the variable within the method within the class (or above)
                     CurrentClass.FindVariable(variableName).Value = newValue;
                 }
             }
-
-            return basetype.Value;
+            
+            // Return the value of the assignment
+            return newValue;
         }
+
+        /// <summary>
+        /// Interprets a block
+        /// </summary>
+        /// <param name="basetype">The block to interpret</param>
+        /// <returns>Should return nothing</returns>
         public object VisitBlock(Block basetype)
         {
             throw new NotImplementedException();
-        }    
+        }
+        
+        /// <summary>
+        /// Interprets a class
+        /// </summary>
+        /// <param name="basetype">The class to interpret</param>
+        /// <returns>Should return nothing</returns>
         public object VisitClassDecl(ClassDecl basetype)
         {
+            // The name of the class
             string className = (string)basetype.className.Accept(this);
+
+            // A class to match against
             Class c = new Class(className);
 
+            // If we're not currently in a class (Global scope)
             if (CurrentClass == null)
             {
-                // Global scope
+                // If we can't find the class within the environment
                 if (!Environment.Classes.Any(n => n.ClassName == c.ClassName))
                 {
+                    // Throw an exception saying the class was never made
                     new CompilerException("Class: " + c.ClassName + " Could not be found");
                 }
+                // Set the class to the first occurence of the class
                 c = Environment.Classes.First(n => n.ClassName == c.ClassName);
             }
+            // If we're within a class (Sub class)
             else
             {
-                // In a class within a class
+                // If we cannot find the class as a subclass of the current class
                 if (!CurrentClass.Classes.Any(n => n.ClassName == c.ClassName))
                 {
+                    // Throw a nets
                     new CompilerException("Variable: " + c.ClassName + " Could not be found");
                 }
                 c = CurrentClass.Classes.First(n => n.ClassName == c.ClassName);
@@ -445,6 +506,13 @@ namespace Interpreter
 
         public object VisitMethodCall(MethodCall methodCall)
         {
+            // Print function
+            if (methodCall.calledMethod.MethodName == "print")
+            {
+                Console.WriteLine(methodCall.arguments[0].Accept(this));
+                return null;
+            }
+
             MethodBody bestBody = null;
             foreach(MethodBody methodBody in methodCall.calledMethod.Implementations)
             {
@@ -465,11 +533,6 @@ namespace Interpreter
             }
             if (bestBody != null)
             {
-                if(methodCall.calledMethod.MethodName == "print")
-                {
-                    Console.WriteLine(methodCall.arguments[0].Accept(this));
-                    return null;
-                }
                     
                 bestBody.Caller = methodCall;
                 return bestBody.Accept(this);

@@ -1,6 +1,7 @@
 ﻿class Greeter
   Greet :: Void <- Void 
-
+  Var :: Int
+  
   Greet() do
 	print("Hello World")
   end

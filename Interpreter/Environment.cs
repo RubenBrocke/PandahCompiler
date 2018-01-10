@@ -197,6 +197,14 @@ namespace Interpreter
         }
     }
 
+    public class Instance
+    {
+        public Class parentClass { get; set; } // Get the variables from this class
+        public Identifier Identifier { get; set; }
+             
+
+    }
+
     public class Method
     {
         public string MethodName { get; set; }
